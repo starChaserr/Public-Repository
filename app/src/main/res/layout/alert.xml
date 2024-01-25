@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="30dp"
+    app:cardBackgroundColor="?attr/colorOnBackground"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="10dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="12dp"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:src="@drawable/round_warning_24"/>
+
+        <TextView
+            android:id="@+id/alertTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="?attr/colorAccent"
+            android:textSize="21sp"
+            android:gravity="center"
+            android:text="Warning"/>
+
+        <TextView
+            android:id="@+id/alertBody"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="?attr/colorAccent"
+            android:textSize="15sp"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:text="Warning body"/>
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

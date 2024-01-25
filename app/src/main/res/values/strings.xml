@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Public Repository</string>
+    <string name="navigation_drawer_open">NavOpen</string>
+    <string name="navigation_drawer_close">NavClose</string>
+    <string name="top_repository_topics">Top Repository Topics</string>
+    <string name="no_media_added_n_click_here_to_add">No Media added.\n(Click here to add)</string>
+    <string name="title">Title</string>
+    <string name="body">Body</string>
+    <string name="thread_title">Thread title...</string>
+    <string name="thread_body">Thread Body...</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
+    <string name="reply">Reply</string>
+    <string name="message">Message</string>
+</resources>

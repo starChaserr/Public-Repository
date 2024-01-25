@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/rTopic"
+        android:title="Request a new topic" />
+    <item
+        android:id="@+id/settings"
+        android:title="Settings" />
+    <item
+        android:id="@+id/donate"
+        android:title="Donate" />
+    <item
+        android:id="@+id/refresh"
+        android:title="Refresh" />
+</menu>

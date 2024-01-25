@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.Toolbar xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/toolbar"
+    android:layout_width="match_parent"
+    android:layout_height="?attr/actionBarSize"
+    android:background="?attr/colorOnBackground"
+    android:elevation="10dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/back"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent"
+            android:src="@drawable/baseline_arrow_back_24"
+            android:paddingEnd="12dp"
+            android:paddingStart="0dp"
+            android:contentDescription="@null" />
+
+        <TextView
+            android:id="@+id/tTitle"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:fontFamily="cursive"
+            android:gravity="center|start"
+            android:text="@string/app_name"
+            android:textAllCaps="false"
+            android:textColor="?attr/colorPrimary"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/warning"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginEnd="12dp"
+            android:src="@drawable/round_warning_24"
+            android:contentDescription="@null" />
+
+        <ProgressBar
+            android:id="@+id/checker"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_gravity="center"
+            android:layout_marginEnd="12dp"/>
+
+        <ImageButton
+            android:id="@+id/more"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/baseline_more_vert_24"
+            android:backgroundTint="@android:color/transparent"
+            android:layout_gravity="center"
+            android:contentDescription="@null" />
+
+    </LinearLayout>
+</androidx.appcompat.widget.Toolbar>

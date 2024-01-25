@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "142290616193",
+    "project_id": "public-repository-bb6d2",
+    "storage_bucket": "public-repository-bb6d2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:142290616193:android:0435d7a9d13af3d213f280",
+        "android_client_info": {
+          "package_name": "com.forums.publicrepository"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD3QShqGmMHDzhd8lZUpNRhxFypsL3DUXU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
