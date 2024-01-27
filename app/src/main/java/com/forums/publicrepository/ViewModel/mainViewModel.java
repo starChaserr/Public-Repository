@@ -91,5 +91,9 @@ public class mainViewModel extends AndroidViewModel {
     public LiveData<List<Thread>> getReplies(String tid){
         return repo.getReplies(tid);
     }
+
+    public LiveData<Thread> getMessageById(String MsgLoc){
+        return repo.getMessageById(MsgLoc);
+    }
 //--------------------------------------------------------------------------------------------------
 }

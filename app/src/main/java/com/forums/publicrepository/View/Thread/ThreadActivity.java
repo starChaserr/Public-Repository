@@ -20,6 +20,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.forums.publicrepository.Arch.Entity.Thread;
 import com.forums.publicrepository.R;
 import com.forums.publicrepository.View.Adapters.ThreadAdapter;
+import com.forums.publicrepository.View.Adapters.TopicsAdapter;
+import com.forums.publicrepository.View.Home.HomeActivity;
+import com.forums.publicrepository.View.Reply.ReplyActivity;
 import com.forums.publicrepository.ViewModel.mainViewModel;
 import com.forums.publicrepository.utils.Constants;
 import com.forums.publicrepository.utils.Snack;
@@ -50,11 +53,15 @@ public class ThreadActivity extends AppCompatActivity {
         String t = "Top Threads in "+Topic;
         title.setText(t);
         RecyclerView list = findViewById(R.id.list);
-        adapter = new ThreadAdapter();
+        adapter = new ThreadAdapter(Constants.THREAD_ACTIVITY);
         list.setAdapter(adapter);
         viewModel = new ViewModelProvider(this).get(mainViewModel.class);
         vmStuff(Topic);
-
+        adapter.setOnThreadClickListener(id -> {
+            Intent i = new Intent(ThreadActivity.this, ReplyActivity.class);
+            i.putExtra(Constants.INTENT_THREAD, id);
+            startActivity(i);
+        });
     }
 
     private void vmStuff(String Topic){

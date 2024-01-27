@@ -39,7 +39,7 @@ public class Threads {
     private MutableLiveData<String> mID = new MutableLiveData<>(null);
     private final AtomicInteger isPosted = new AtomicInteger(Constants.NOT_POSTED);
     private Observer<Long> timeObserver;
-    private Observer<String> threadObserver, mIdObserver;
+    private Observer<String> mIdObserver;
     private final MessageID mId = new MessageID();
 
     public Threads() {
@@ -107,31 +107,31 @@ public class Threads {
     public LiveData<List<Thread>> getReplies(String tid) {
         MutableLiveData<List<Thread>> allReplies = new MutableLiveData<>(null);
         List<String> location = msgLocSplit(tid);
+        Snack.log("replyID", location.get(0) + location.get(1));
+
         database.getReference(Constants.chats).child(location.get(0))
                 .child(Constants.messages).addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        if (dataSnapshot.exists() && dataSnapshot.getValue() instanceof Map) {
-                            Map<String, Map<String, Object>> messagesMap = (Map<String, Map<String, Object>>) dataSnapshot.getValue();
-
+                        if (dataSnapshot.exists()) {
                             List<Thread> allMessages = new ArrayList<>();
 
-                            for (Map.Entry<String, Map<String, Object>> entry : messagesMap.entrySet()) {
-//                                String messageId = entry.getKey();
-                                Map<String, Object> messageData = entry.getValue();
+                            for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
+                                // Assuming childSnapshot contains the message data directly
+                                Map<String, Object> messageData = (Map<String, Object>) childSnapshot.getValue();
 
-                                Thread thread = new Thread();
-                                if (messageData.get("msgLoc") == tid) {
+                                if (messageData != null && messageData.containsKey("msgLoc") &&
+                                        messageData.get("msgLoc").equals(tid)) {
                                     String id = (String) messageData.get("id");
                                     String title = (String) messageData.get("title");
                                     String body = (String) messageData.get("body");
                                     String imgUrl = (String) messageData.get("imgURL");
                                     String msgLoc = (String) messageData.get("msgLoc");
                                     long time = (long) messageData.get("creationTime");
-
-                                    thread = new Thread(id, title, body, imgUrl, msgLoc, time);
+                                    Snack.log("replyID", id);
+                                    Thread thread = new Thread(id, title, body, imgUrl, msgLoc, time);
+                                    allMessages.add(thread);
                                 }
-                                allMessages.add(thread);
                             }
 
                             allReplies.setValue(allMessages);
@@ -143,8 +143,56 @@ public class Threads {
                         errorCollector.postValue(error.getMessage());
                     }
                 });
+
         return allReplies;
     }
+
+    public LiveData<Thread> getMessageById(String msgLoc) {
+        List<String> location = msgLocSplit(msgLoc);
+        MutableLiveData<Thread> thread = new MutableLiveData<>(null);
+
+        DatabaseReference msgRef = database.getReference(Constants.chats).child(location.get(0))
+                .child(Constants.messages).child(location.get(1));
+
+        msgRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists() && snapshot.getValue() instanceof Map) {
+                    Map<String, Object> messageData = (Map<String, Object>) snapshot.getValue();
+
+                    // Ensure the messageData contains the necessary fields
+                    if (messageData.containsKey("msgLoc") && messageData.containsKey("id")
+                            && messageData.containsKey("title") && messageData.containsKey("body")
+                            && messageData.containsKey("imgURL") && messageData.containsKey("creationTime")) {
+
+                        String id = (String) messageData.get("id");
+                        String title = (String) messageData.get("title");
+                        String body = (String) messageData.get("body");
+                        String imgUrl = (String) messageData.get("imgURL");
+                        String msgLoc = (String) messageData.get("msgLoc");
+                        long time = FirebaseUtils.timeConverter((long) messageData.get("creationTime"));
+
+                        // Create the Thread object
+                        Thread message = new Thread(id, title, body, imgUrl, msgLoc, time);
+
+                        // Post the value to the LiveData
+                        thread.postValue(message);
+                    } else {
+                        // Handle missing fields or unexpected data
+                        // You might want to log an error or notify the caller
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Handle onCancelled, log an error, or notify the caller
+            }
+        });
+
+        return thread;
+    }
+
 
 
     private LiveData<String> getMID() {
@@ -207,7 +255,6 @@ public class Threads {
             }
         }
     }
-
     private List<String> msgLocSplit(String r) {
         String[] parts = r.split("/");
         return Arrays.asList(parts);
@@ -238,7 +285,6 @@ public class Threads {
             ref.child(Constants.messages).child(ids.get(i)).addValueEventListener(eventListener);
         }
     }
-
     private LiveData<String> getThreadNum(String Topic) {
         DatabaseReference threadRef = database.getReference(Constants.chats).child(Topic).child(Constants.threadNum);
 
@@ -263,8 +309,6 @@ public class Threads {
 
         return threadNum;
     }
-
-
     private void setThreadNum(String num, String Topic){
         DatabaseReference threadRef = database.getReference(Constants.chats)
                 .child(Topic).child(Constants.threadNum);
@@ -304,7 +348,6 @@ public class Threads {
         });
         return serverTime;
     }
-
     private void removeMID_Observer(){
         if (mID!=null){
             mID.removeObserver(mIdObserver);

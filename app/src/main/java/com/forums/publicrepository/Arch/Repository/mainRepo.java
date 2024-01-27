@@ -94,4 +94,8 @@ public class mainRepo {
     public LiveData<List<Thread>> getReplies(String tid){
         return fThreads.getReplies(tid);
     }
+
+    public LiveData<Thread> getMessageById(String MsgLoc){
+        return fThreads.getMessageById(MsgLoc);
+    }
 }

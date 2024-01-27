@@ -1,5 +1,6 @@
 package com.forums.publicrepository.View.Adapters;
 
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,24 +15,26 @@ import com.forums.publicrepository.Arch.Entity.Thread;
 import com.forums.publicrepository.Arch.Firebase.FirebaseUtils;
 import com.forums.publicrepository.R;
 import com.forums.publicrepository.utils.Constants;
-import com.forums.publicrepository.utils.Snack;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ThreadAdapter extends RecyclerView.Adapter<ThreadAdapter.ViewHolder> {
 
-    private TopicsAdapter.onItemClickListener listener;
+    private onThreadClickListener tListener;
+    private onReplyClickListener rListener;
+    private replyClickListener replyClickListener;
     private final List<Thread> threads = new ArrayList<>();
+    private final int Activity;
 
-    public ThreadAdapter() {
+    public ThreadAdapter(int Activity) {
+        this.Activity = Activity;
     }
 
     public void setThreads(List<Thread> threads) {
         this.threads.clear();
         this.threads.addAll(threads);
         notifyDataSetChanged();
-        Snack.log("Thread: ", "Size: " + this.threads.size());
     }
 
     @NonNull
@@ -69,10 +72,29 @@ public class ThreadAdapter extends RecyclerView.Adapter<ThreadAdapter.ViewHolder
             img = v.findViewById(R.id.image);
             reply = v.findViewById(R.id.btnReply);
 
+            reply.setOnClickListener(v1->{
+                int pos = getAdapterPosition();
+                if (replyClickListener != null && pos != RecyclerView.NO_POSITION) {
+                    tListener.onItemClick(threads.get(pos).getId());
+                }
+            });
+
             itemView.setOnClickListener(v1 -> {
                 int pos = getAdapterPosition();
-                if (listener != null && pos != RecyclerView.NO_POSITION) {
-                    listener.onItemClick(threads.get(pos).getId());
+                if (Activity==Constants.THREAD_ACTIVITY){
+                    if (tListener != null && pos != RecyclerView.NO_POSITION) {
+                        tListener.onItemClick(threads.get(pos).getMsgLoc() + "/" + threads.get(pos).getId());
+                    }
+                    title.setEllipsize(TextUtils.TruncateAt.END);
+                    title.setMaxLines(1);
+                    body.setEllipsize(TextUtils.TruncateAt.END);
+                    body.setMaxLines(2);
+                } else if (Activity == Constants.REPLY_ACTIVITY) {
+                    if (rListener != null && pos != RecyclerView.NO_POSITION) {
+                        rListener.onItemClick(threads.get(pos).getId());
+                    }
+                    String s = threads.get(pos).getMsgLoc() + "/" + threads.get(pos).getId();
+                    rListener.onItemClick(s);
                 }
             });
         }
@@ -82,21 +104,38 @@ public class ThreadAdapter extends RecyclerView.Adapter<ThreadAdapter.ViewHolder
                 img.setVisibility(View.GONE);
                 bar.setVisibility(View.GONE);
             }
-            reply.setVisibility(View.GONE);
+            if (Activity == Constants.THREAD_ACTIVITY){
+                reply.setVisibility(View.GONE);
+            }
             String idTxt = "@"+thread.getId() + "\t\t" + FirebaseUtils.getTime(thread.getCreationTime());
             id.setText(idTxt);
             title.setText(thread.getTitle());
             body.setText(thread.getBody());
-            Snack.log("Title", thread.getTitle());
         }
     }
 
-    public interface onItemClickListener {
+    public interface onThreadClickListener {
         void onItemClick(String id);
     }
 
-    public void setOnItemClickListener(TopicsAdapter.onItemClickListener listener) {
-        this.listener = listener;
+    public interface onReplyClickListener {
+        void onItemClick(String id);
+    }
+
+    public interface replyClickListener {
+        void onItemClick(String id);
+    }
+
+    public void setOnThreadClickListener(onThreadClickListener tListener) {
+        this.tListener = tListener;
+    }
+
+    public void setOnReplyClickListener(onReplyClickListener rListener) {
+        this.rListener = rListener;
+    }
+
+    public void setReplyClickListener(replyClickListener replyClickListener) {
+        this.replyClickListener = replyClickListener;
     }
 
 }

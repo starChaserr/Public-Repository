@@ -10,5 +10,5 @@ public class Constants {
             threadNum = "threadNum", Lock = "Lock", nullLock = "NULL", NO_PIC = "nullPic", INTENT_TOPIC = "intentsTopic",
             INTENT_THREAD = "intentThread";
 
-    public static int NOT_POSTED = 0, POSTED = 1;
+    public static int NOT_POSTED = 0, POSTED = 1, THREAD_ACTIVITY = 0, REPLY_ACTIVITY = 1;
 }
