@@ -1,5 +1,6 @@
 package com.forums.publicrepository.View.Reply;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
@@ -28,7 +29,6 @@ import com.forums.publicrepository.utils.Snack;
 public class ReplyActivity extends AppCompatActivity {
 
     private mainViewModel viewModel;
-    private RecyclerView list;
     private ThreadAdapter adapter;
 //    Thread items----------
     private ImageView pic;
@@ -55,9 +55,12 @@ public class ReplyActivity extends AppCompatActivity {
         body = findViewById(R.id.tBody);
         id = findViewById(R.id.tid);
         reply = findViewById(R.id.btnReply);
-        list = findViewById(R.id.list);
+        RecyclerView list1 = findViewById(R.id.list);
         adapter = new ThreadAdapter(Constants.REPLY_ACTIVITY);
-        list.setAdapter(adapter);
+        list1.setAdapter(adapter);
+        adapter.setReplyClickListener(id -> {
+            addThreadPopup(msgLoc, id);
+        });
         viewModel.getMessageById(msgLoc).observe(this, t->{
             if(t!=null){
                 if (t.getImgURL().equals(Constants.NO_PIC)){
@@ -68,7 +71,7 @@ public class ReplyActivity extends AppCompatActivity {
                 id.setText(ID);
                 title.setText(t.getTitle());
                 body.setText(t.getBody());
-                reply.setOnClickListener(v->addThreadPopup(msgLoc));
+                reply.setOnClickListener(v->addThreadPopup(msgLoc, null));
             }
         });
         viewModel.getReplies(msgLoc).observe(this, list->{
@@ -78,22 +81,36 @@ public class ReplyActivity extends AppCompatActivity {
         });
     }
 
-    private void addThreadPopup(String msgLoc){
+    private void addThreadPopup(String msgLoc, @Nullable String replyTo){
         PopupWindow popupWindow = new PopupWindow(this);
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         assert inflater != null;
         View v = inflater.inflate(R.layout.reply_popup, null);
         popupWindow.setContentView(v);
-        EditText title, body;
+        TextView tid;
+        EditText body;
         Button confirm, cancel;
 //        Basic [media upload logic pending.]
+        tid = v.findViewById(R.id.rid);
+        String s = "";
+        if (replyTo==null){
+            s = "Replying to @"+msgLoc.split("/")[1];
+        }else{
+            s = "Replying to @"+replyTo+" in @"+msgLoc.split("/")[1]+"'s thread.";
+        }
+        tid.setText(s);
         body = v.findViewById(R.id.body);
         confirm = v.findViewById(R.id.confirm);
         cancel = v.findViewById(R.id.cancel);
         cancel.setOnClickListener(V->popupWindow.dismiss());
 
         confirm.setOnClickListener(V->{
-            String b = body.getText().toString();
+            String b = "";
+            if (replyTo==null){
+                b = body.getText().toString();
+            }else{
+                b = "@"+replyTo+"< "+body.getText().toString();
+            }
             if (!b.isEmpty()){
                 Thread t = new Thread();
                 t.setTitle(Constants.NO_TITLE);

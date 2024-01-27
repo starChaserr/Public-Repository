@@ -20,12 +20,21 @@
             android:orientation="vertical"
             android:padding="3dp">
 
+            <TextView
+                android:id="@+id/rid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="12dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="0dp"
+                android:paddingEnd="0dp"/>
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="150dp"
                 android:layout_gravity="center"
                 android:layout_marginStart="6dp"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="12dp"
                 android:layout_marginEnd="6dp"
                 android:background="@drawable/thread_bg"
                 android:orientation="vertical">
@@ -71,6 +80,15 @@
                 android:orientation="horizontal">
 
                 <Button
+                    android:id="@+id/cancel"
+                    style="?android:attr/buttonBarButtonStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/cancel"
+                    android:textColor="?attr/colorAccent" />
+
+                <Button
                     android:id="@+id/confirm"
                     style="?android:attr/buttonBarButtonStyle"
                     android:layout_width="0dp"
@@ -79,14 +97,6 @@
                     android:text="@string/confirm"
                     android:textColor="?attr/colorAccent" />
 
-                <Button
-                    android:id="@+id/cancel"
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/cancel"
-                    android:textColor="?attr/colorAccent" />
             </LinearLayout>
         </LinearLayout>
     </androidx.cardview.widget.CardView>

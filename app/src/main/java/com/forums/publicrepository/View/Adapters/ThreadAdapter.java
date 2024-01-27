@@ -22,7 +22,6 @@ import java.util.List;
 public class ThreadAdapter extends RecyclerView.Adapter<ThreadAdapter.ViewHolder> {
 
     private onThreadClickListener tListener;
-    private onReplyClickListener rListener;
     private replyClickListener replyClickListener;
     private final List<Thread> threads = new ArrayList<>();
     private final int Activity;
@@ -75,7 +74,7 @@ public class ThreadAdapter extends RecyclerView.Adapter<ThreadAdapter.ViewHolder
             reply.setOnClickListener(v1->{
                 int pos = getAdapterPosition();
                 if (replyClickListener != null && pos != RecyclerView.NO_POSITION) {
-                    tListener.onItemClick(threads.get(pos).getId());
+                    replyClickListener.onItemClick(threads.get(pos).getId());
                 }
             });
 
@@ -89,13 +88,14 @@ public class ThreadAdapter extends RecyclerView.Adapter<ThreadAdapter.ViewHolder
                     title.setMaxLines(1);
                     body.setEllipsize(TextUtils.TruncateAt.END);
                     body.setMaxLines(2);
-                } else if (Activity == Constants.REPLY_ACTIVITY) {
-                    if (rListener != null && pos != RecyclerView.NO_POSITION) {
-                        rListener.onItemClick(threads.get(pos).getId());
-                    }
-                    String s = threads.get(pos).getMsgLoc() + "/" + threads.get(pos).getId();
-                    rListener.onItemClick(s);
                 }
+//                else if (Activity == Constants.REPLY_ACTIVITY) {
+//                    if (rListener != null && pos != RecyclerView.NO_POSITION) {
+//                        rListener.onItemClick(threads.get(pos).getId());
+//                    }
+//                    String s = threads.get(pos).getMsgLoc() + "/" + threads.get(pos).getId();
+//                    rListener.onItemClick(s);
+//                }
             });
         }
 
@@ -111,7 +111,7 @@ public class ThreadAdapter extends RecyclerView.Adapter<ThreadAdapter.ViewHolder
             id.setText(idTxt);
             if (thread.getTitle().equals(Constants.NO_TITLE)){
                 title.setVisibility(View.GONE);
-                body.setTextSize(21f);
+                body.setTextSize(18f);
             }else {
                 title.setText(thread.getTitle());
             }
@@ -123,20 +123,12 @@ public class ThreadAdapter extends RecyclerView.Adapter<ThreadAdapter.ViewHolder
         void onItemClick(String id);
     }
 
-    public interface onReplyClickListener {
-        void onItemClick(String id);
-    }
-
     public interface replyClickListener {
         void onItemClick(String id);
     }
 
     public void setOnThreadClickListener(onThreadClickListener tListener) {
         this.tListener = tListener;
-    }
-
-    public void setOnReplyClickListener(onReplyClickListener rListener) {
-        this.rListener = rListener;
     }
 
     public void setReplyClickListener(replyClickListener replyClickListener) {
