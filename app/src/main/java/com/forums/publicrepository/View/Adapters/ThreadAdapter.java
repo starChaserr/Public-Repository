@@ -109,7 +109,12 @@ public class ThreadAdapter extends RecyclerView.Adapter<ThreadAdapter.ViewHolder
             }
             String idTxt = "@"+thread.getId() + "\t\t" + FirebaseUtils.getTime(thread.getCreationTime());
             id.setText(idTxt);
-            title.setText(thread.getTitle());
+            if (thread.getTitle().equals(Constants.NO_TITLE)){
+                title.setVisibility(View.GONE);
+                body.setTextSize(21f);
+            }else {
+                title.setText(thread.getTitle());
+            }
             body.setText(thread.getBody());
         }
     }

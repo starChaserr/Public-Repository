@@ -48,6 +48,7 @@ public class Threads {
         this.storageReference = storage.getReference();
     }
 
+//To be called in repo------------------------------------------------------------------------------
     public LiveData<List<Thread>> getAllThreads(String Topic) {
 //        To get all threads under the same topic
         final MutableLiveData<List<Thread>> threads = new MutableLiveData<>(null);
@@ -107,7 +108,6 @@ public class Threads {
     public LiveData<List<Thread>> getReplies(String tid) {
         MutableLiveData<List<Thread>> allReplies = new MutableLiveData<>(null);
         List<String> location = msgLocSplit(tid);
-        Snack.log("replyID", location.get(0) + location.get(1));
 
         database.getReference(Constants.chats).child(location.get(0))
                 .child(Constants.messages).addValueEventListener(new ValueEventListener() {
@@ -128,7 +128,6 @@ public class Threads {
                                     String imgUrl = (String) messageData.get("imgURL");
                                     String msgLoc = (String) messageData.get("msgLoc");
                                     long time = (long) messageData.get("creationTime");
-                                    Snack.log("replyID", id);
                                     Thread thread = new Thread(id, title, body, imgUrl, msgLoc, time);
                                     allMessages.add(thread);
                                 }
@@ -146,7 +145,6 @@ public class Threads {
 
         return allReplies;
     }
-
     public LiveData<Thread> getMessageById(String msgLoc) {
         List<String> location = msgLocSplit(msgLoc);
         MutableLiveData<Thread> thread = new MutableLiveData<>(null);
@@ -192,9 +190,9 @@ public class Threads {
 
         return thread;
     }
+//--------------------------------------------------------------------------------------------------
 
-
-
+//Hidden stuff--------------------------------------------------------------------------------------
     private LiveData<String> getMID() {
         mID = (MutableLiveData<String>) mId.getMID();
         return mID;
@@ -365,4 +363,5 @@ public class Threads {
             timeObserver = null;
         }
     }
+//--------------------------------------------------------------------------------------------------
 }

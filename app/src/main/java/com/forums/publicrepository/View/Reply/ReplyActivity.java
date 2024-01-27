@@ -82,34 +82,29 @@ public class ReplyActivity extends AppCompatActivity {
         PopupWindow popupWindow = new PopupWindow(this);
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         assert inflater != null;
-        View v = inflater.inflate(R.layout.add_thread_popup, null);
+        View v = inflater.inflate(R.layout.reply_popup, null);
         popupWindow.setContentView(v);
         EditText title, body;
         Button confirm, cancel;
 //        Basic [media upload logic pending.]
-        title = v.findViewById(R.id.title);
         body = v.findViewById(R.id.body);
         confirm = v.findViewById(R.id.confirm);
         cancel = v.findViewById(R.id.cancel);
         cancel.setOnClickListener(V->popupWindow.dismiss());
 
         confirm.setOnClickListener(V->{
-            String ti = title.getText().toString(), b = body.getText().toString();
-            if (!ti.isEmpty()){
-                if (!b.isEmpty()){
-                    Thread t = new Thread();
-                    t.setTitle(ti);
-                    t.setBody(b);
-                    t.setMsgLoc(msgLoc);
-                    t.setImgURL(Constants.NO_PIC);
-                    t.setCreationTime(0);
-                    viewModel.addThread(t, null);
-                    popupWindow.dismiss();
-                }else{
-                    Snack.show(v, "Can't post without body");
-                }
+            String b = body.getText().toString();
+            if (!b.isEmpty()){
+                Thread t = new Thread();
+                t.setTitle(Constants.NO_TITLE);
+                t.setBody(b);
+                t.setMsgLoc(msgLoc);
+                t.setImgURL(Constants.NO_PIC);
+                t.setCreationTime(0);
+                viewModel.addThread(t, null);
+                popupWindow.dismiss();
             }else{
-                Snack.show(v, "Can't post without title");
+                Snack.show(v, "Can't post without body");
             }
         });
 
