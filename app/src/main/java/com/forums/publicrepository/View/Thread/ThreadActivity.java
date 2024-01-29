@@ -109,6 +109,7 @@ public class ThreadActivity extends AppCompatActivity {
 
     private void addThreadPopup(String Topic) {
         PopupWindow popupWindow = new PopupWindow(this);
+        media = new MutableLiveData<>();
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         assert inflater != null;
         View v = inflater.inflate(R.layout.add_thread_popup, null);
@@ -118,7 +119,6 @@ public class ThreadActivity extends AppCompatActivity {
         TextView addMedia;
         ImageView pic;
         AtomicReference<Uri> mediaURI = new AtomicReference<>(null);
-//        Basic [media upload logic pending.]
         title = v.findViewById(R.id.title);
         body = v.findViewById(R.id.body);
         confirm = v.findViewById(R.id.confirm);
@@ -141,10 +141,12 @@ public class ThreadActivity extends AppCompatActivity {
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
+                    media.setValue(null);
                     mediaToBeUploaded = false;
                 } else if (uri.containsKey("video/")) {
-//                Handle video
+//                  TODO: Handle video
                     Snack.show(more, "Todo://");
+                    media.setValue(null);
                     mediaToBeUploaded = false;
                 }
             }
