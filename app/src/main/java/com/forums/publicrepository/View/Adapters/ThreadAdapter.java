@@ -1,5 +1,7 @@
 package com.forums.publicrepository.View.Adapters;
 
+import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,8 +11,14 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.forums.publicrepository.Arch.Entity.Thread;
 import com.forums.publicrepository.Arch.Firebase.FirebaseUtils;
 import com.forums.publicrepository.R;
@@ -25,9 +33,11 @@ public class ThreadAdapter extends RecyclerView.Adapter<ThreadAdapter.ViewHolder
     private replyClickListener replyClickListener;
     private final List<Thread> threads = new ArrayList<>();
     private final int Activity;
+    private final Context context;
 
-    public ThreadAdapter(int Activity) {
+    public ThreadAdapter(int Activity, Context context) {
         this.Activity = Activity;
+        this.context = context;
     }
 
     public void setThreads(List<Thread> threads) {
@@ -103,6 +113,22 @@ public class ThreadAdapter extends RecyclerView.Adapter<ThreadAdapter.ViewHolder
             if (thread.getImgURL().equals(Constants.NO_PIC)){
                 img.setVisibility(View.GONE);
                 bar.setVisibility(View.GONE);
+            }else{
+                img.setVisibility(View.GONE);
+                Glide.with(context).load(thread.getImgURL()).listener(new RequestListener<Drawable>() {
+                    @Override
+                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+//                        Reload within 5seconds
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                        img.setVisibility(View.VISIBLE);
+                        bar.setVisibility(View.GONE);
+                        return false;
+                    }
+                }).into(img);
             }
             if (Activity == Constants.THREAD_ACTIVITY){
                 reply.setVisibility(View.GONE);

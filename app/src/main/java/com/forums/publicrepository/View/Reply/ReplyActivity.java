@@ -56,7 +56,7 @@ public class ReplyActivity extends AppCompatActivity {
         id = findViewById(R.id.tid);
         reply = findViewById(R.id.btnReply);
         RecyclerView list1 = findViewById(R.id.list);
-        adapter = new ThreadAdapter(Constants.REPLY_ACTIVITY);
+        adapter = new ThreadAdapter(Constants.REPLY_ACTIVITY, this);
         list1.setAdapter(adapter);
         adapter.setReplyClickListener(id -> {
             addThreadPopup(msgLoc, id);

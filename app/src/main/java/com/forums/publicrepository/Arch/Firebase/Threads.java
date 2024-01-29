@@ -44,7 +44,7 @@ public class Threads {
 
     public Threads() {
         this.database = FirebaseDatabase.getInstance(Constants.dbRef);
-        this.storage = FirebaseStorage.getInstance();
+        this.storage = FirebaseStorage.getInstance("gs://public-repository-bb6d2.appspot.com");
         this.storageReference = storage.getReference();
     }
 
@@ -74,7 +74,7 @@ public class Threads {
         });
         return threads;
     }
-    public void addThread(Thread thread, @Nullable Uri filePath) {
+    public void addThread(Thread thread, @Nullable Uri filePath)  {
         List<String> threadLoc = msgLocSplit(thread.getMsgLoc());
         postErrors.postValue(null);
         String topic = threadLoc.get(0);
@@ -219,39 +219,51 @@ public class Threads {
         mId.LockID();
         if (isPosted.get() == Constants.NOT_POSTED) {
             if (filePath != null) {
-                // Upload pic
-                uploadMedia(thread, filePath);
-            }
-            if (threadLoc.size() < 2) {
-                AtomicReference<Observer<String>> threadObserverRef = new AtomicReference<>();
-                threadObserverRef.set(integer -> {
-                    if (integer != null && isPosted.get() == Constants.NOT_POSTED) {
-                        Snack.log("Debug", "ThreadNum observer triggered. Current threadNum: " + integer);
+                // Upload the media (image) and handle further processing in the uploadMedia method
+                uploadMedia(thread, filePath, imageUrl -> {
+                    // Set the uploaded image URL in the Thread entity
+                    thread.setImgURL(imageUrl);
 
-                        setThreadNum(String.valueOf(Integer.parseInt(integer) + 1), topic);
-                        Snack.log("Debug", "ThreadNum set to: " + String.valueOf(Integer.parseInt(integer) + 1));
-
-                        HashMap<String, Object> map = new HashMap<>();
-                        map.put(integer, thread.getId());
-                        DatabaseReference threadIdsRef = database.getReference(Constants.chats).child(topic).child(Constants.threadIDs);
-                        threadIdsRef.updateChildren(map, (error, ref) -> {
-                            if (error != null) {
-                                postErrors.setValue(error.getMessage());
-                                Snack.log("Error", "Failed to update thread IDs: " + error.getMessage());
-                            } else {
-                                putInMsgs(thread, topic);
-                                Snack.log("Debug", "Thread data uploaded successfully!");
-                            }
-                        });
-                        removeThreadObserver(threadObserverRef.get());
-                    }
+                    // Continue with the normal thread addition process
+                    threadAdd(threadLoc, topic, thread);
                 });
-                Snack.log("Debug", "Adding ThreadNum observer");
-                getThreadNum(topic).observeForever(threadObserverRef.get());
             } else {
-                // a normal message.
-                putInMsgs(thread, topic);
+                // No media (image) to upload, proceed with the normal thread addition
+                threadAdd(threadLoc, topic, thread);
             }
+
+        }
+    }
+    private void threadAdd(List<String> threadLoc, String topic, Thread thread){
+        if (threadLoc.size() < 2) {
+            AtomicReference<Observer<String>> threadObserverRef = new AtomicReference<>();
+            threadObserverRef.set(integer -> {
+                if (integer != null && isPosted.get() == Constants.NOT_POSTED) {
+                    Snack.log("Debug", "ThreadNum observer triggered. Current threadNum: " + integer);
+
+                    setThreadNum(String.valueOf(Integer.parseInt(integer) + 1), topic);
+                    Snack.log("Debug", "ThreadNum set to: " + String.valueOf(Integer.parseInt(integer) + 1));
+
+                    HashMap<String, Object> map = new HashMap<>();
+                    map.put(integer, thread.getId());
+                    DatabaseReference threadIdsRef = database.getReference(Constants.chats).child(topic).child(Constants.threadIDs);
+                    threadIdsRef.updateChildren(map, (error, ref) -> {
+                        if (error != null) {
+                            postErrors.setValue(error.getMessage());
+                            Snack.log("Error", "Failed to update thread IDs: " + error.getMessage());
+                        } else {
+                            putInMsgs(thread, topic);
+                            Snack.log("Debug", "Thread data uploaded successfully!");
+                        }
+                    });
+                    removeThreadObserver(threadObserverRef.get());
+                }
+            });
+            Snack.log("Debug", "Adding ThreadNum observer");
+            getThreadNum(topic).observeForever(threadObserverRef.get());
+        } else {
+            // a normal message.
+            putInMsgs(thread, topic);
         }
     }
     private List<String> msgLocSplit(String r) {
@@ -313,18 +325,27 @@ public class Threads {
                 .child(Topic).child(Constants.threadNum);
         threadRef.setValue(num);
     }
-    private void uploadMedia(Thread entity, Uri filePath) {
+    private void uploadMedia(Thread entity, Uri filePath, UploadCallback callback) {
         StorageReference ref = storageReference.child("media/" + entity.getId());
         ref.putFile(filePath).addOnSuccessListener(taskSnapshot -> {
             if (taskSnapshot.getError() == null) {
                 Snack.log("Media", "Uploaded!");
-                ref.getDownloadUrl().addOnSuccessListener(uri -> entity.setImgURL(uri.toString()));
+
+                // Get the download URL
+                ref.getDownloadUrl().addOnSuccessListener(uri -> {
+                    // Set the image URL in the Thread entity
+                    entity.setImgURL(uri.toString());
+
+                    // Notify the callback with the image URL
+                    callback.onUploadSuccess(entity.getImgURL());
+                });
             } else {
                 errorCollector.postValue(Objects.requireNonNull(taskSnapshot.getError()).getMessage());
                 Snack.log("Media", "Error: " + taskSnapshot.getError().getMessage());
             }
         });
     }
+
     private LiveData<Long> getServerTime(){
         DatabaseReference timestampRef = FirebaseDatabase.getInstance(Constants.dbRef)
                 .getReference(".info/serverTimeOffset");
@@ -364,5 +385,9 @@ public class Threads {
             timeObserver = null;
         }
     }
+    private interface UploadCallback {
+        void onUploadSuccess(String imageUrl);
+    }
+
 //--------------------------------------------------------------------------------------------------
 }
