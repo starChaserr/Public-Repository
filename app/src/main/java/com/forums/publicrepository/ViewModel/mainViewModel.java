@@ -12,6 +12,7 @@ import com.forums.publicrepository.Arch.Entity.Thread;
 import com.forums.publicrepository.Arch.Entity.Topic;
 import com.forums.publicrepository.Arch.Entity.User;
 import com.forums.publicrepository.Arch.Repository.mainRepo;
+import com.forums.publicrepository.utils.Constants;
 
 import java.util.List;
 
@@ -72,8 +73,8 @@ public class mainViewModel extends AndroidViewModel {
         return repo.getThreads(Topic);
     }
 
-    public void addThread(Thread thread,@Nullable Uri filePath){
-        repo.addThread(thread, filePath);
+    public void addThread(Thread thread,@Nullable Uri filePath, @Nullable String uriType){
+        repo.addThread(thread, filePath, uriType);
     }
 
     public LiveData<String> getPostError(){
@@ -96,4 +97,8 @@ public class mainViewModel extends AndroidViewModel {
         return repo.getMessageById(MsgLoc);
     }
 //--------------------------------------------------------------------------------------------------
+//Interactables-------------------------------------------------------------------------------------
+    public LiveData<Constants.MediaType> getMediaType(String url){
+        return repo.getMediaType(url);
+    }
 }

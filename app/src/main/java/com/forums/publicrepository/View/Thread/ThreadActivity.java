@@ -3,6 +3,7 @@ package com.forums.publicrepository.View.Thread;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -14,6 +15,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -22,6 +24,11 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.forums.publicrepository.Arch.Entity.Thread;
 import com.forums.publicrepository.R;
 import com.forums.publicrepository.View.Adapters.ThreadAdapter;
@@ -30,6 +37,8 @@ import com.forums.publicrepository.ViewModel.mainViewModel;
 import com.forums.publicrepository.utils.Constants;
 import com.forums.publicrepository.utils.Snack;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -119,6 +128,7 @@ public class ThreadActivity extends AppCompatActivity {
         TextView addMedia;
         ImageView pic;
         AtomicReference<Uri> mediaURI = new AtomicReference<>(null);
+        AtomicReference<String> uriType = new AtomicReference<>(null);
         title = v.findViewById(R.id.title);
         body = v.findViewById(R.id.body);
         confirm = v.findViewById(R.id.confirm);
@@ -132,6 +142,7 @@ public class ThreadActivity extends AppCompatActivity {
                 if (uri.containsKey("image/")) {
                     addMedia.setVisibility(View.GONE);
                     pic.setVisibility(View.VISIBLE);
+                    uriType.set(Constants.INTENT_IMAGE);
                     if (uri.get("image/")!=null) {
                         mediaURI.set(uri.get("image/"));
                     }
@@ -144,8 +155,8 @@ public class ThreadActivity extends AppCompatActivity {
                     media.setValue(null);
                     mediaToBeUploaded = false;
                 } else if (uri.containsKey("video/")) {
-//                  TODO: Handle video
-                    Snack.show(more, "Todo://");
+                    putThumbnail(uri.get("video/"), pic, addMedia);
+                    uriType.set(Constants.INTENT_VIDEO);
                     media.setValue(null);
                     mediaToBeUploaded = false;
                 }
@@ -157,7 +168,7 @@ public class ThreadActivity extends AppCompatActivity {
 
         confirm.setOnClickListener(V -> {
             String ti = title.getText().toString(), b = body.getText().toString();
-            setThread(ti, b, Topic, popupWindow, V, mediaURI.get());
+            setThread(ti, b, Topic, popupWindow, V, mediaURI.get(), uriType.get());
         });
 
         popupWindow.setFocusable(true);
@@ -168,7 +179,17 @@ public class ThreadActivity extends AppCompatActivity {
         popupWindow.showAsDropDown(addThread);
     }
 
-    private void setThread(String ti, String b, String Topic, PopupWindow popupWindow, View v, @Nullable Uri Uri){
+    private void putThumbnail(Uri uri, ImageView pic, TextView addMedia){
+        addMedia.setVisibility(View.GONE);
+        pic.setVisibility(View.VISIBLE);
+        Glide.with(this)
+                .load(uri)
+                .thumbnail(0.1f) // Load a thumbnail (10% of the original video)
+                .into(pic);
+    }
+
+    private void setThread(String ti, String b, String Topic, PopupWindow popupWindow
+            , View v, @Nullable Uri Uri, @Nullable String uriType){
         if (!ti.isEmpty()) {
             if (!b.isEmpty()) {
                 Thread t = new Thread();
@@ -177,7 +198,7 @@ public class ThreadActivity extends AppCompatActivity {
                 t.setMsgLoc(Topic);
                 t.setImgURL(Constants.NO_PIC);
                 t.setCreationTime(0);
-                viewModel.addThread(t, Uri);
+                viewModel.addThread(t, Uri, uriType);
                 popupWindow.dismiss();
             } else {
                 Snack.show(v, "Can't post without body");

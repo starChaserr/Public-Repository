@@ -2,8 +2,11 @@ package com.forums.publicrepository.View.Reply;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Context;
@@ -32,6 +35,7 @@ import com.forums.publicrepository.Arch.Entity.Thread;
 import com.forums.publicrepository.Arch.Firebase.FirebaseUtils;
 import com.forums.publicrepository.R;
 import com.forums.publicrepository.View.Adapters.ThreadAdapter;
+import com.forums.publicrepository.View.MediaPlayer.MediaPlayer;
 import com.forums.publicrepository.ViewModel.mainViewModel;
 import com.forums.publicrepository.utils.Constants;
 import com.forums.publicrepository.utils.Snack;
@@ -76,17 +80,42 @@ public class ReplyActivity extends AppCompatActivity {
         RecyclerView list1 = findViewById(R.id.list);
         adapter = new ThreadAdapter(Constants.REPLY_ACTIVITY, this);
         list1.setAdapter(adapter);
+
+        adapter.getCount().observe(this, count -> {
+            LinearLayoutManager layoutManager = (LinearLayoutManager) list1.getLayoutManager();
+            if (layoutManager != null) {
+                if (count > 1) {
+                    layoutManager.smoothScrollToPosition(list1, null, count - 1);
+                }
+            }
+        });
+
         adapter.setReplyClickListener(id -> {
             addThreadPopup(msgLoc, id);
         });
-        viewModel.getMessageById(msgLoc).observe(this, t -> {
-            if (t != null) {
-                if (t.getImgURL().equals(Constants.NO_PIC)) {
-                    pic.setVisibility(View.GONE);
-                    bar.setVisibility(View.GONE);
-                } else {
-                    pic.setVisibility(View.GONE);
-                    Glide.with(this).load(t.getImgURL()).listener(new RequestListener<Drawable>() {
+
+        AtomicReference<Thread> thread = new AtomicReference<>(null);
+        LiveData<Constants.MediaType> mediaTypeLiveData = Transformations.switchMap(
+                viewModel.getMessageById(msgLoc), t -> {
+                    if (t != null) {
+                        thread.set(t);
+                        if (t.getImgURL().equals(Constants.NO_PIC)) {
+                            pic.setVisibility(View.GONE);
+                            bar.setVisibility(View.GONE);
+                            return new MutableLiveData<>(null);
+                        } else {
+                            return viewModel.getMediaType(t.getImgURL());
+                        }
+                    } else {
+                        return new MutableLiveData<>(null);
+                    }
+                });
+
+        mediaTypeLiveData.observe(this, type -> {
+            if (type != null) {
+                pic.setVisibility(View.GONE);
+                if (type == Constants.MediaType.IMAGE) {
+                    Glide.with(this).load(thread.get().getImgURL()).listener(new RequestListener<Drawable>() {
                         @Override
                         public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
                             return false;
@@ -99,14 +128,27 @@ public class ReplyActivity extends AppCompatActivity {
                             return false;
                         }
                     }).into(pic);
+                    imgClickListener(pic, Constants.INTENT_IMAGE, thread.get().getImgURL());
+                } else if (type == Constants.MediaType.VIDEO) {
+                    bar.setVisibility(View.GONE);
+                    pic.setVisibility(View.VISIBLE);
+                    Glide.with(this)
+                            .load(thread.get().getImgURL())
+                            .thumbnail(0.1f)
+                            .into(pic);
+                    imgClickListener(pic, Constants.INTENT_VIDEO, thread.get().getImgURL());
+                } else if (type == Constants.MediaType.UNKNOWN) {
+                    Snack.log("Reply Activity", "Unknown type");
                 }
-                String ID = "@" + t.getId() + "\t\t" + FirebaseUtils.getTime(t.getCreationTime());
+
+                String ID = "@" + thread.get().getId() + "\t\t" + FirebaseUtils.getTime(thread.get().getCreationTime());
                 id.setText(ID);
-                title.setText(t.getTitle());
-                body.setText(t.getBody());
+                title.setText(thread.get().getTitle());
+                body.setText(thread.get().getBody());
                 reply.setOnClickListener(v -> addThreadPopup(msgLoc, null));
             }
         });
+
         viewModel.getReplies(msgLoc).observe(this, list -> {
             if (list != null) {
                 adapter.setThreads(list);
@@ -114,9 +156,20 @@ public class ReplyActivity extends AppCompatActivity {
         });
     }
 
+    private void imgClickListener(ImageView img, String urlType, String url) {
+//        urlType: Image or Video. (Constants)
+        img.setOnClickListener(v -> {
+            Snack.log("ThreadAdapter", "ImageView clicked.");
+            Intent i = new Intent(ReplyActivity.this, MediaPlayer.class);
+            String[] media = {urlType, url};
+            i.putExtra(Constants.MEDIA_KEY, media);
+            startActivity(i);
+        });
+    }
+
     private void addThreadPopup(String msgLoc, @Nullable String replyTo) {
         PopupWindow popupWindow = new PopupWindow(this);
-        media = new MutableLiveData<>();
+        media = new MutableLiveData<>(null);
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         assert inflater != null;
         View v = inflater.inflate(R.layout.reply_popup, null);
@@ -140,6 +193,7 @@ public class ReplyActivity extends AppCompatActivity {
         pic = v.findViewById(R.id.image);
         addMedia = v.findViewById(R.id.addMedia);
         AtomicReference<Uri> mediaURI = new AtomicReference<>(null);
+        AtomicReference<String> mediaType = new AtomicReference<>(null);
         cancel.setOnClickListener(V -> popupWindow.dismiss());
         pic.setOnClickListener(V -> getMediaIntent());
         addMedia.setOnClickListener(V -> getMediaIntent());
@@ -151,6 +205,7 @@ public class ReplyActivity extends AppCompatActivity {
                     pic.setVisibility(View.VISIBLE);
                     if (uri.get("image/") != null) {
                         mediaURI.set(uri.get("image/"));
+                        mediaType.set(Constants.INTENT_IMAGE);
                     }
                     try {
                         Bitmap bMap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri.get("image/"));
@@ -161,8 +216,16 @@ public class ReplyActivity extends AppCompatActivity {
                     media.setValue(null);
                     mediaToBeUploaded = false;
                 } else if (uri.containsKey("video/")) {
-//                  TODO: Handle video
-                    Snack.show(pic, "Todo://");
+                    addMedia.setVisibility(View.GONE);
+                    pic.setVisibility(View.VISIBLE);
+                    if (uri.get("video/") != null) {
+                        mediaURI.set(uri.get("video/"));
+                        mediaType.set(Constants.INTENT_VIDEO);
+                    }
+                    Glide.with(this)
+                            .load(uri.get("video/"))
+                            .thumbnail(0.1f)
+                            .into(pic);
                     media.setValue(null);
                     mediaToBeUploaded = false;
                 }
@@ -170,7 +233,7 @@ public class ReplyActivity extends AppCompatActivity {
         });
 
         confirm.setOnClickListener(V -> {
-            putThread(popupWindow, msgLoc, V, body, replyTo, mediaURI.get());
+            putThread(popupWindow, msgLoc, V, body, replyTo, mediaURI.get(), mediaType.get());
         });
 
         popupWindow.setFocusable(true);
@@ -182,7 +245,7 @@ public class ReplyActivity extends AppCompatActivity {
     }
 
     private void putThread(PopupWindow popupWindow, String msgLoc, View v, EditText body,
-                           @Nullable String replyTo, @Nullable Uri uri) {
+                           @Nullable String replyTo, @Nullable Uri uri, @Nullable String uriType) {
         String b = "";
         if (replyTo == null) {
             b = body.getText().toString();
@@ -196,7 +259,7 @@ public class ReplyActivity extends AppCompatActivity {
             t.setBody(b);
             t.setMsgLoc(msgLoc);
             t.setCreationTime(0);
-            viewModel.addThread(t, uri);
+            viewModel.addThread(t, uri, uriType);
             popupWindow.dismiss();
         } else {
             Snack.show(v, "Can't post without body");

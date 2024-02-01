@@ -17,6 +17,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
@@ -44,7 +45,7 @@ public class Threads {
 
     public Threads() {
         this.database = FirebaseDatabase.getInstance(Constants.dbRef);
-        this.storage = FirebaseStorage.getInstance("gs://public-repository-bb6d2.appspot.com");
+        this.storage = FirebaseStorage.getInstance(Constants.storageRef);
         this.storageReference = storage.getReference();
     }
 
@@ -74,7 +75,7 @@ public class Threads {
         });
         return threads;
     }
-    public void addThread(Thread thread, @Nullable Uri filePath)  {
+    public void addThread(Thread thread, @Nullable Uri filePath, @Nullable String uriType)  {
         List<String> threadLoc = msgLocSplit(thread.getMsgLoc());
         postErrors.postValue(null);
         String topic = threadLoc.get(0);
@@ -84,7 +85,7 @@ public class Threads {
             if (aLong!=null && aLong!=0L){
                mIdObserver = id ->{
                    if (id!=null){
-                       addThreadProcess(thread, id, aLong, filePath, threadLoc, topic);
+                       addThreadProcess(thread, id, aLong, filePath, uriType, threadLoc, topic);
                        removeMID_Observer();
                    }
                 };
@@ -213,14 +214,14 @@ public class Threads {
         }
     }
     private void addThreadProcess(Thread thread, String id, long aLong,
-                                  @Nullable Uri filePath, List<String> threadLoc, String topic) {
+                                  @Nullable Uri filePath, @Nullable String uriType, List<String> threadLoc, String topic) {
         thread.setId(id);
         thread.setCreationTime(aLong);
         mId.LockID();
         if (isPosted.get() == Constants.NOT_POSTED) {
-            if (filePath != null) {
+            if (filePath != null && uriType != null) {
                 // Upload the media (image) and handle further processing in the uploadMedia method
-                uploadMedia(thread, filePath, imageUrl -> {
+                uploadMedia(thread, filePath, uriType, imageUrl -> {
                     // Set the uploaded image URL in the Thread entity
                     thread.setImgURL(imageUrl);
 
@@ -239,10 +240,7 @@ public class Threads {
             AtomicReference<Observer<String>> threadObserverRef = new AtomicReference<>();
             threadObserverRef.set(integer -> {
                 if (integer != null && isPosted.get() == Constants.NOT_POSTED) {
-                    Snack.log("Debug", "ThreadNum observer triggered. Current threadNum: " + integer);
-
                     setThreadNum(String.valueOf(Integer.parseInt(integer) + 1), topic);
-                    Snack.log("Debug", "ThreadNum set to: " + String.valueOf(Integer.parseInt(integer) + 1));
 
                     HashMap<String, Object> map = new HashMap<>();
                     map.put(integer, thread.getId());
@@ -250,16 +248,13 @@ public class Threads {
                     threadIdsRef.updateChildren(map, (error, ref) -> {
                         if (error != null) {
                             postErrors.setValue(error.getMessage());
-                            Snack.log("Error", "Failed to update thread IDs: " + error.getMessage());
-                        } else {
+                            } else {
                             putInMsgs(thread, topic);
-                            Snack.log("Debug", "Thread data uploaded successfully!");
-                        }
+                            }
                     });
                     removeThreadObserver(threadObserverRef.get());
                 }
             });
-            Snack.log("Debug", "Adding ThreadNum observer");
             getThreadNum(topic).observeForever(threadObserverRef.get());
         } else {
             // a normal message.
@@ -325,26 +320,44 @@ public class Threads {
                 .child(Topic).child(Constants.threadNum);
         threadRef.setValue(num);
     }
-    private void uploadMedia(Thread entity, Uri filePath, UploadCallback callback) {
+    private void uploadMedia(Thread entity, Uri filePath, String uriType, UploadCallback callback) {
         StorageReference ref = storageReference.child("media/" + entity.getId());
-        ref.putFile(filePath).addOnSuccessListener(taskSnapshot -> {
-            if (taskSnapshot.getError() == null) {
-                Snack.log("Media", "Uploaded!");
+        // Determine the content type based on the file extension
+        String contentType, Video = "video/mp4", Image = "image/jpeg";
+        if (uriType.equals(Constants.INTENT_VIDEO)) {
+            contentType = Video;
+        } else if (uriType.equals(Constants.INTENT_IMAGE)) {
+            contentType = Image;
+        } else {
+            // Default for unknown types (Other types)
+            contentType = "application/octet-stream";
+        }
 
-                // Get the download URL
-                ref.getDownloadUrl().addOnSuccessListener(uri -> {
-                    // Set the image URL in the Thread entity
-                    entity.setImgURL(uri.toString());
+        // Upload the file with the determined content type
+        if (contentType.equals(Video) || contentType.equals(Image)){
+            ref.putFile(filePath, new StorageMetadata.Builder()
+                            .setContentType(contentType)
+                            .build())
+                    .addOnSuccessListener(taskSnapshot -> {
+                        if (taskSnapshot.getError() == null) {
+                            Snack.log("Media", "Uploaded!");
 
-                    // Notify the callback with the image URL
-                    callback.onUploadSuccess(entity.getImgURL());
-                });
-            } else {
-                errorCollector.postValue(Objects.requireNonNull(taskSnapshot.getError()).getMessage());
-                Snack.log("Media", "Error: " + taskSnapshot.getError().getMessage());
-            }
-        });
+                            // Get the download URL
+                            ref.getDownloadUrl().addOnSuccessListener(uri -> {
+                                // Set the media URL in the Thread entity
+                                entity.setImgURL(uri.toString());
+
+                                // Notify the callback with the media URL
+                                callback.onUploadSuccess(entity.getImgURL());
+                            });
+                        } else {
+                            errorCollector.postValue(Objects.requireNonNull(taskSnapshot.getError()).getMessage());
+                            Snack.log("Media", "Error: " + taskSnapshot.getError().getMessage());
+                        }
+                    });
+        }
     }
+
 
     private LiveData<Long> getServerTime(){
         DatabaseReference timestampRef = FirebaseDatabase.getInstance(Constants.dbRef)

@@ -10,8 +10,10 @@ import com.forums.publicrepository.Arch.Entity.Thread;
 import com.forums.publicrepository.Arch.Entity.Topic;
 import com.forums.publicrepository.Arch.Entity.User;
 import com.forums.publicrepository.Arch.Firebase.Authenticate;
+import com.forums.publicrepository.Arch.Firebase.Interactables;
 import com.forums.publicrepository.Arch.Firebase.Threads;
 import com.forums.publicrepository.Arch.Firebase.Topics;
+import com.forums.publicrepository.utils.Constants;
 
 import java.util.List;
 
@@ -19,6 +21,7 @@ public class mainRepo {
     private final Authenticate fAuth = new Authenticate();
     private final Topics fTopics = new Topics();
     private final Threads fThreads = new Threads();
+    private final Interactables fInt = new Interactables();
     private final Application application;
     public mainRepo(Application application) {
         this.application = application;
@@ -75,8 +78,8 @@ public class mainRepo {
         return fThreads.getAllThreads(Topic);
     }
 
-    public void addThread(Thread thread,@Nullable Uri filePath){
-        fThreads.addThread(thread, filePath);
+    public void addThread(Thread thread,@Nullable Uri filePath, @Nullable String uriType){
+        fThreads.addThread(thread, filePath, uriType);
     }
 
     public LiveData<String> getPostError(){
@@ -98,4 +101,10 @@ public class mainRepo {
     public LiveData<Thread> getMessageById(String MsgLoc){
         return fThreads.getMessageById(MsgLoc);
     }
+//--------------------------------------------------------------------------------------------------
+//Interactables-------------------------------------------------------------------------------------
+    public LiveData<Constants.MediaType> getMediaType(String Url){
+        return fInt.getMediaType(Url);
+    }
+//--------------------------------------------------------------------------------------------------
 }
