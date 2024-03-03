@@ -102,7 +102,7 @@ public class ReplyActivity extends AppCompatActivity {
                         if (t.getImgURL().equals(Constants.NO_PIC)) {
                             pic.setVisibility(View.GONE);
                             bar.setVisibility(View.GONE);
-                            return new MutableLiveData<>(null);
+                            return new MutableLiveData<>(Constants.MediaType.UNKNOWN);
                         } else {
                             return viewModel.getMediaType(t.getImgURL());
                         }
